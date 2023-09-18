@@ -63,7 +63,19 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
     if(opts.hasKey("RECOGNIZER_ENGINE")) {
       switch (opts.getString("RECOGNIZER_ENGINE")) {
         case "GOOGLE": {
-          speech = SpeechRecognizer.createSpeechRecognizer(this.reactContext, ComponentName.unflattenFromString("com.google.android.googlequicksearchbox/com.google.android.voicesearch.serviceapi.GoogleRecognitionService"));
+          final List<ResolveInfo> services = this.reactContext.getPackageManager()
+                  .queryIntentServices(new Intent(RecognitionService.SERVICE_INTERFACE), 0);
+          String selectedService = "com.google.android.googlequicksearchbox/com.google.android.voicesearch.serviceapi.GoogleRecognitionService";
+          if (services.size() > 0) {
+            for (ResolveInfo service: services) {
+              if (service.serviceInfo.packageName.equalsIgnoreCase("com.google.android.googlequicksearchbox") || service.serviceInfo.packageName.equalsIgnoreCase("com.google.android.tts")) {
+                selectedService = service.serviceInfo.packageName+"/"+ service.serviceInfo.name;
+                break;
+              }
+            }
+          }
+          Log.d("ASR", "Selected Speech Service - " + selectedService);
+          speech = SpeechRecognizer.createSpeechRecognizer(this.reactContext, ComponentName.unflattenFromString(selectedService));
           break;
         }
         default:
